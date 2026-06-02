@@ -386,15 +386,27 @@ async function scanCurrentPage() {
 // Initial scan
 scanCurrentPage();
 
+// Throttle helper to avoid excessive scans
+function throttle<T extends (...args: any[]) => any>(fn: T, ms: number): T {
+  let lastCall = 0;
+  return ((...args: any[]) => {
+    const now = Date.now();
+    if (now - lastCall >= ms) {
+      lastCall = now;
+      return fn(...args);
+    }
+  }) as T;
+}
+
 // Watch for dynamic content (infinite scroll, SPA navigation)
+const throttledScan = throttle(scanCurrentPage, 500);
 const observer = new MutationObserver(() => {
-  scanCurrentPage();
+  throttledScan();
 });
 
 observer.observe(document.body, {
   childList: true,
   subtree: true,
-  throttleMs: 500,
 });
 
 console.log('🍏 NutriCart content script initialized');
