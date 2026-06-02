@@ -4,19 +4,19 @@
   "version": "1.0.0",
   "description": "Smart nutrition ratings for your online grocery shopping — scan products, see ratings, find healthier alternatives.",
   "icons": {
-    "16": "public/icons/icon-16.png",
-    "32": "public/icons/icon-32.png",
-    "48": "public/icons/icon-48.png",
-    "128": "public/icons/icon-128.png"
+    "16": "public/icons/icon-16.svg",
+    "32": "public/icons/icon-32.svg",
+    "48": "public/icons/icon-48.svg",
+    "128": "public/icons/icon-128.svg"
   },
   "action": {
     "default_popup": "src/popup/index.html",
     "default_title": "NutriCart",
     "default_icon": {
-      "16": "public/icons/icon-16.png",
-      "32": "public/icons/icon-32.png",
-      "48": "public/icons/icon-48.png",
-      "128": "public/icons/icon-128.png"
+      "16": "public/icons/icon-16.svg",
+      "32": "public/icons/icon-32.svg",
+      "48": "public/icons/icon-48.svg",
+      "128": "public/icons/icon-128.svg"
     }
   },
   "background": {
