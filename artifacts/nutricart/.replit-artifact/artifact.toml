@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "NutriCart"
+version = "1.0.0"
+id = "artifacts/nutricart"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20543
+
+[services.development]
+run = "pnpm --filter @workspace/nutricart run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/nutricart", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/nutricart/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20543"
+BASE_PATH = "/"

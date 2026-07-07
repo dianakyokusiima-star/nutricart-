@@ -1,0 +1,3 @@
+- [NutriCart auth-schema contract](nutricart-auth-schema.md) — sessions table must have sid/sess/expire columns (not id/userId/expiresAt) to match the replit-auth lib template.
+- [NutriCart date handling in routes](nutricart-date-routes.md) — Zod coerces OpenAPI `date` format fields to JS Date objects; Drizzle date(mode:"string") columns need ISO string conversion before insert.
+- [replit-auth-web vite types](nutricart-replit-auth-web.md) — replit-auth-web lib needs vite as devDependency + `/// <reference types="vite/client" />` directive for import.meta.env to typecheck.

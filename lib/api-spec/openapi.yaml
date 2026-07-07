@@ -3,13 +3,32 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: NutriCart API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: Auth
+    description: Browser and mobile authentication endpoints.
+  - name: profile
+    description: User health profile
+  - name: medications
+    description: User medications (prescriptions & supplements)
+  - name: interactions
+    description: Drug interaction checking
+  - name: prices
+    description: Pharmacy price comparison
+  - name: savings
+    description: Savings tracker
+  - name: reminders
+    description: Refill reminders
+  - name: dashboard
+    description: Dashboard summary data
+  - name: recommendations
+    description: AI-powered medication recommendations
+
 paths:
   /healthz:
     get:
@@ -24,7 +43,580 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # Auth endpoints
+  /auth/user:
+    get:
+      tags: [Auth]
+      operationId: getCurrentAuthUser
+      summary: Get the currently authenticated user
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+        - $ref: '#/components/parameters/SessionCookie'
+      responses:
+        '200':
+          description: Auth status resolved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserEnvelope'
+  /login:
+    get:
+      tags: [Auth]
+      operationId: beginBrowserLogin
+      summary: Start the browser OIDC login flow
+      parameters:
+        - name: returnTo
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to the OIDC authorization endpoint.
+  /callback:
+    get:
+      tags: [Auth]
+      operationId: handleBrowserLoginCallback
+      summary: Complete the browser OIDC login flow
+      parameters:
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: iss
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uri
+      responses:
+        '302':
+          description: Redirect to the returnTo path on success.
+  /logout:
+    get:
+      tags: [Auth]
+      operationId: logoutBrowserSession
+      summary: Clear the session and begin OIDC logout
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+        - $ref: '#/components/parameters/SessionCookie'
+        - name: returnTo
+          in: query
+          required: false
+          schema:
+            type: string
+            default: /
+      responses:
+        '302':
+          description: Redirect to OIDC logout.
+  /mobile-auth/token-exchange:
+    post:
+      tags: [Auth]
+      operationId: exchangeMobileAuthorizationCode
+      summary: Exchange a mobile OIDC code for a session token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileTokenExchangeRequest'
+      responses:
+        '200':
+          description: Session created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileTokenExchangeSuccess'
+        '400':
+          description: Missing or invalid required fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Token did not contain usable claims.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Token exchange failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /mobile-auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logoutMobileSession
+      summary: Delete a mobile session token
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+      responses:
+        '200':
+          description: Logout processed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutSuccess'
+
+  # Profile
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get the current user's health profile
+      responses:
+        "200":
+          description: User health profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthProfile"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    put:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Update the current user's health profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HealthProfileUpdate"
+      responses:
+        "200":
+          description: Updated health profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthProfile"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  # Medications
+  /medications:
+    get:
+      operationId: listMedications
+      tags: [medications]
+      summary: List all medications for the current user
+      responses:
+        "200":
+          description: List of medications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Medication"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: createMedication
+      tags: [medications]
+      summary: Add a new medication to the user's profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MedicationInput"
+      responses:
+        "201":
+          description: Medication created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Medication"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /medications/{id}:
+    get:
+      operationId: getMedication
+      tags: [medications]
+      summary: Get a single medication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Medication found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Medication"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    patch:
+      operationId: updateMedication
+      tags: [medications]
+      summary: Update a medication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MedicationUpdate"
+      responses:
+        "200":
+          description: Medication updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Medication"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: deleteMedication
+      tags: [medications]
+      summary: Remove a medication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  # Interactions
+  /interactions:
+    get:
+      operationId: getInteractions
+      tags: [interactions]
+      summary: Get interaction check results for the current user's medications
+      responses:
+        "200":
+          description: Interaction results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InteractionReport"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  # Prices
+  /prices/search:
+    get:
+      operationId: searchMedicationPrices
+      tags: [prices]
+      summary: Search pharmacy prices for a medication by name
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Price comparison results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceComparisonResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /prices/compare/{medicationId}:
+    get:
+      operationId: getMedicationPrices
+      tags: [prices]
+      summary: Get price comparison for one of the user's medications
+      parameters:
+        - name: medicationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Price comparison results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceComparisonResult"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  # Savings
+  /savings:
+    get:
+      operationId: listSavings
+      tags: [savings]
+      summary: List savings entries for the current user
+      responses:
+        "200":
+          description: List of savings entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SavingsEntry"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: recordSaving
+      tags: [savings]
+      summary: Record a savings event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SavingsInput"
+      responses:
+        "201":
+          description: Savings entry recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavingsEntry"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /savings/summary:
+    get:
+      operationId: getSavingsSummary
+      tags: [savings]
+      summary: Get savings summary statistics for the current user
+      responses:
+        "200":
+          description: Savings summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavingsSummary"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  # Reminders
+  /reminders:
+    get:
+      operationId: listReminders
+      tags: [reminders]
+      summary: List all refill reminders for the current user
+      responses:
+        "200":
+          description: List of reminders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reminder"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: createReminder
+      tags: [reminders]
+      summary: Create a refill reminder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReminderInput"
+      responses:
+        "201":
+          description: Reminder created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /reminders/{id}:
+    patch:
+      operationId: updateReminder
+      tags: [reminders]
+      summary: Update a reminder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReminderUpdate"
+      responses:
+        "200":
+          description: Reminder updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: deleteReminder
+      tags: [reminders]
+      summary: Delete a reminder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  # Dashboard
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary statistics
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  # AI Recommendations
+  /recommendations:
+    get:
+      operationId: getRecommendations
+      tags: [recommendations]
+      summary: Get AI-powered medication recommendations based on the user's profile
+      responses:
+        "200":
+          description: List of AI recommendations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recommendation"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
 components:
+  parameters:
+    AuthorizationSessionHeader:
+      name: Authorization
+      in: header
+      required: false
+      description: Opaque session token — `Bearer <sid>`.
+      schema:
+        type: string
+    SessionCookie:
+      name: sid
+      in: cookie
+      required: false
+      description: Browser session cookie.
+      schema:
+        type: string
+
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +626,473 @@ components:
       required:
         - status
 
+    # Auth schemas
+    AuthUser:
+      type: object
+      required: [id, email, firstName, lastName, profileImageUrl]
+      properties:
+        id:
+          type: string
+        email:
+          type: [string, 'null']
+          format: email
+        firstName:
+          type: [string, 'null']
+        lastName:
+          type: [string, 'null']
+        profileImageUrl:
+          type: [string, 'null']
+    AuthUserEnvelope:
+      type: object
+      required: [user]
+      properties:
+        user:
+          oneOf:
+            - $ref: '#/components/schemas/AuthUser'
+            - type: 'null'
+    MobileTokenExchangeRequest:
+      type: object
+      required: [code, code_verifier, redirect_uri, state]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        code_verifier:
+          type: string
+          minLength: 1
+        redirect_uri:
+          type: string
+          minLength: 1
+          format: uri
+        state:
+          type: string
+          minLength: 1
+        nonce:
+          type: string
+          minLength: 1
+    MobileTokenExchangeSuccess:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+    LogoutSuccess:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+          const: true
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    # Profile schemas
+    HealthProfile:
+      type: object
+      required: [id, userId, allergies, conditions, preferredPharmacies, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        allergies:
+          type: array
+          items:
+            type: string
+        conditions:
+          type: array
+          items:
+            type: string
+        preferredPharmacies:
+          type: array
+          items:
+            type: string
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    HealthProfileUpdate:
+      type: object
+      properties:
+        allergies:
+          type: array
+          items:
+            type: string
+        conditions:
+          type: array
+          items:
+            type: string
+        preferredPharmacies:
+          type: array
+          items:
+            type: string
+        notes:
+          type: ["string", "null"]
+
+    # Medication schemas
+    Medication:
+      type: object
+      required: [id, userId, name, type, dosage, frequency, startDate, isActive, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        name:
+          type: string
+        genericName:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [prescription, supplement, otc]
+        dosage:
+          type: string
+        frequency:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: ["string", "null"]
+          format: date
+        isActive:
+          type: boolean
+        notes:
+          type: ["string", "null"]
+        prescribedBy:
+          type: ["string", "null"]
+        pharmacy:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    MedicationInput:
+      type: object
+      required: [name, type, dosage, frequency, startDate]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        genericName:
+          type: string
+        type:
+          type: string
+          enum: [prescription, supplement, otc]
+        dosage:
+          type: string
+          minLength: 1
+        frequency:
+          type: string
+          minLength: 1
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        notes:
+          type: string
+        prescribedBy:
+          type: string
+        pharmacy:
+          type: string
+    MedicationUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        genericName:
+          type: string
+        type:
+          type: string
+          enum: [prescription, supplement, otc]
+        dosage:
+          type: string
+        frequency:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: ["string", "null"]
+          format: date
+        isActive:
+          type: boolean
+        notes:
+          type: ["string", "null"]
+        prescribedBy:
+          type: ["string", "null"]
+        pharmacy:
+          type: ["string", "null"]
+
+    # Interaction schemas
+    InteractionFlag:
+      type: object
+      required: [severity, description, medications]
+      properties:
+        severity:
+          type: string
+          enum: [mild, moderate, severe]
+        description:
+          type: string
+        medications:
+          type: array
+          items:
+            type: string
+        recommendation:
+          type: ["string", "null"]
+    InteractionReport:
+      type: object
+      required: [checkedAt, flags, checkedMedications]
+      properties:
+        checkedAt:
+          type: string
+          format: date-time
+        flags:
+          type: array
+          items:
+            $ref: "#/components/schemas/InteractionFlag"
+        checkedMedications:
+          type: array
+          items:
+            type: string
+        isClear:
+          type: boolean
+
+    # Price schemas
+    PharmacyPrice:
+      type: object
+      required: [pharmacyName, price, unit, inStock]
+      properties:
+        pharmacyName:
+          type: string
+        price:
+          type: number
+        unit:
+          type: string
+        inStock:
+          type: boolean
+        deliveryAvailable:
+          type: boolean
+        couponCode:
+          type: ["string", "null"]
+        couponPrice:
+          type: ["number", "null"]
+        distance:
+          type: ["string", "null"]
+    PriceComparisonResult:
+      type: object
+      required: [medicationName, dosage, prices, bestPrice, avgPrice]
+      properties:
+        medicationName:
+          type: string
+        dosage:
+          type: string
+        prices:
+          type: array
+          items:
+            $ref: "#/components/schemas/PharmacyPrice"
+        bestPrice:
+          type: number
+        avgPrice:
+          type: number
+        bestPharmacy:
+          type: ["string", "null"]
+
+    # Savings schemas
+    SavingsEntry:
+      type: object
+      required: [id, userId, medicationName, listPrice, paidPrice, savedAmount, pharmacyName, purchaseDate, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        medicationName:
+          type: string
+        listPrice:
+          type: number
+        paidPrice:
+          type: number
+        savedAmount:
+          type: number
+        pharmacyName:
+          type: string
+        purchaseDate:
+          type: string
+          format: date
+        couponUsed:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+    SavingsInput:
+      type: object
+      required: [medicationName, listPrice, paidPrice, pharmacyName, purchaseDate]
+      properties:
+        medicationName:
+          type: string
+          minLength: 1
+        listPrice:
+          type: number
+        paidPrice:
+          type: number
+        pharmacyName:
+          type: string
+          minLength: 1
+        purchaseDate:
+          type: string
+          format: date
+        couponUsed:
+          type: string
+    SavingsSummary:
+      type: object
+      required: [totalSaved, totalSpent, savingsCount, avgSavingPerPurchase, topPharmacy, monthlySavings]
+      properties:
+        totalSaved:
+          type: number
+        totalSpent:
+          type: number
+        savingsCount:
+          type: integer
+        avgSavingPerPurchase:
+          type: number
+        topPharmacy:
+          type: ["string", "null"]
+        monthlySavings:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthlySaving"
+    MonthlySaving:
+      type: object
+      required: [month, saved, spent]
+      properties:
+        month:
+          type: string
+        saved:
+          type: number
+        spent:
+          type: number
+
+    # Reminder schemas
+    Reminder:
+      type: object
+      required: [id, userId, medicationName, refillDate, daysSupply, isDismissed, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        medicationName:
+          type: string
+        refillDate:
+          type: string
+          format: date
+        daysSupply:
+          type: integer
+        currentSupplyDays:
+          type: ["integer", "null"]
+        isDismissed:
+          type: boolean
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ReminderInput:
+      type: object
+      required: [medicationName, refillDate, daysSupply]
+      properties:
+        medicationName:
+          type: string
+          minLength: 1
+        refillDate:
+          type: string
+          format: date
+        daysSupply:
+          type: integer
+          minimum: 1
+        currentSupplyDays:
+          type: integer
+          minimum: 0
+        notes:
+          type: string
+    ReminderUpdate:
+      type: object
+      properties:
+        medicationName:
+          type: string
+        refillDate:
+          type: string
+          format: date
+        daysSupply:
+          type: integer
+          minimum: 1
+        currentSupplyDays:
+          type: ["integer", "null"]
+          minimum: 0
+        isDismissed:
+          type: boolean
+        notes:
+          type: ["string", "null"]
+
+    # Dashboard schema
+    DashboardSummary:
+      type: object
+      required: [activeMedicationsCount, upcomingRemindersCount, totalSavedAllTime, interactionFlagsCount, recentSavings, upcomingReminders]
+      properties:
+        activeMedicationsCount:
+          type: integer
+        upcomingRemindersCount:
+          type: integer
+        totalSavedAllTime:
+          type: number
+        interactionFlagsCount:
+          type: integer
+        recentSavings:
+          type: array
+          items:
+            $ref: "#/components/schemas/SavingsEntry"
+        upcomingReminders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Reminder"
+
+    # Recommendation schema
+    Recommendation:
+      type: object
+      required: [id, title, description, type, relevance]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [generic_alternative, otc_option, savings_tip, interaction_warning, refill_reminder]
+        relevance:
+          type: string
+          enum: [high, medium, low]
+        medicationName:
+          type: ["string", "null"]
+        estimatedSavings:
+          type: ["number", "null"]
+        actionLabel:
+          type: ["string", "null"]
