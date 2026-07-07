@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NutriCart — Your pharmacy, powered by AI.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:        #F3F7F5;
+    --surface:   #FFFFFF;
+    --surface-2: #EAF2EE;
+    --ink:       #142621;
+    --ink-soft:  #52655D;
+    --primary:      #114C3E;
+    --primary-deep: #0A2E25;
+    --primary-tint: #E4EFEA;
+    --accent:      #FF7A59;
+    --accent-deep: #D65C3C;
+    --accent-tint: #FFE7DE;
+    --line:      #DCE6E1;
+    --shadow: rgba(10,46,37,0.14);
+    --radius: 4px;
+    --display: 'Poppins', sans-serif;
+    --body: 'Inter', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg); color:var(--ink); font-family:var(--body); line-height:1.55; -webkit-font-smoothing:antialiased;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important;}
+  }
+  a{color:inherit; text-decoration:none;}
+  img,svg{display:block;}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 32px;}
+  ::selection{background:var(--accent); color:var(--surface);}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:3px;}
+
+  /* ---------- LOGO ---------- */
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand-word{font-family:var(--display); font-weight:600; font-size:21px; color:var(--primary); letter-spacing:-0.01em;}
+  .brand-word em{font-style:normal; color:var(--accent-deep);}
+  footer .brand-word{color:var(--surface);}
+  footer .brand-word em{color:#FFAF95;}
+
+  /* ---------- NAV ---------- */
+  header{position:sticky; top:0; z-index:100; background:rgba(243,247,245,0.9); backdrop-filter:blur(8px); border-bottom:1px solid var(--line);}
+  nav{display:flex; align-items:center; justify-content:space-between; padding:16px 32px; max-width:1180px; margin:0 auto;}
+  .nav-links{display:flex; gap:36px; font-size:14.5px; font-weight:500; color:var(--ink);}
+  .nav-links a{padding:6px 0; border-bottom:2px solid transparent; transition:border-color 0.15s ease;}
+  .nav-links a:hover{border-color:var(--accent);}
+  @media(max-width:880px){.nav-links{display:none;}}
+
+  .btn{font-family:var(--body); font-weight:600; font-size:14.5px; padding:13px 24px; border-radius:999px; display:inline-flex; align-items:center; gap:8px; cursor:pointer; border:1.5px solid transparent; transition:transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;}
+  .btn-primary{background:var(--primary); color:var(--surface);}
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 10px 24px -8px var(--shadow); background:var(--primary-deep);}
+  .btn-ghost{background:var(--surface); color:var(--primary); border-color:var(--line);}
+  .btn-ghost:hover{border-color:var(--primary); transform:translateY(-2px);}
+  .btn-on-dark{background:var(--surface); color:var(--primary);}
+  .btn-on-dark:hover{background:var(--accent-tint);}
+
+  /* ---------- HERO ---------- */
+  .hero{padding:100px 0 64px; display:grid; grid-template-columns:1.05fr 0.95fr; gap:70px; align-items:center;}
+  .eyebrow{font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent-deep); margin-bottom:18px; display:flex; align-items:center; gap:10px;}
+  .eyebrow::before{content:""; width:22px; height:1.5px; background:var(--accent); display:inline-block;}
+  h1{font-family:var(--display); font-weight:600; font-size:clamp(38px,4.6vw,58px); line-height:1.08; letter-spacing:-0.015em; color:var(--primary-deep); max-width:600px;}
+  h1 span{color:var(--accent-deep);}
+  .hero p.lede{margin-top:22px; font-size:18px; color:var(--ink-soft); max-width:480px;}
+  .hero-cta{margin-top:32px; display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+  .trust{margin-top:20px; font-family:var(--mono); font-size:12px; color:var(--ink-soft); letter-spacing:0.02em;}
+
+  /* trust strip */
+  .trustbar{border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:var(--surface);}
+  .trustbar-inner{display:flex; justify-content:space-between; flex-wrap:wrap; gap:22px; padding:26px 0; font-family:var(--mono); font-size:12px; color:var(--ink-soft); letter-spacing:0.03em;}
+  .trustbar-inner span{display:flex; align-items:center; gap:8px;}
+  .trustbar-inner span::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--accent); display:inline-block;}
+
+  /* ---------- RX LABEL (signature element) ---------- */
+  .label-stage{display:flex; justify-content:center; position:relative;}
+  .rx-card{
+    position:relative; width:100%; max-width:360px; background:var(--surface);
+    border-radius:20px; box-shadow:0 40px 70px -30px var(--shadow), 0 6px 16px rgba(10,46,37,0.10);
+    overflow:hidden; transform:rotate(1.4deg);
+  }
+  .rx-head{background:var(--primary); color:var(--surface); padding:20px 24px; display:flex; align-items:center; justify-content:space-between;}
+  .rx-head .rx-mark{display:flex; align-items:center; gap:10px; font-family:var(--display); font-weight:600; font-size:15px;}
+  .rx-head .rx-badge{font-family:var(--mono); font-size:10px; letter-spacing:0.08em; background:rgba(255,255,255,0.14); padding:4px 9px; border-radius:20px;}
+  .rx-scan{position:absolute; left:0; right:0; height:2.5px; top:64px; background:linear-gradient(90deg, transparent, var(--accent) 20%, var(--accent) 80%, transparent); box-shadow:0 0 14px 2px rgba(255,122,89,0.55); animation:scan 3.8s ease-in-out infinite;}
+  @keyframes scan{0%{top:20%;} 50%{top:88%;} 100%{top:20%;}}
+  .rx-body{padding:22px 24px 26px;}
+  .rx-row{display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-top:1px dashed var(--line); font-size:13.5px;}
+  .rx-row:first-child{border-top:none;}
+  .rx-row .name{color:var(--ink); font-weight:500;}
+  .rx-row .val{font-family:var(--mono); font-size:11.5px; color:var(--primary); font-weight:600; background:var(--primary-tint); padding:4px 9px; border-radius:20px; white-space:nowrap;}
+  .rx-foot{display:flex; align-items:center; justify-content:space-between; margin-top:18px; padding-top:16px; border-top:1px solid var(--line);}
+  .rx-barcode{display:flex; gap:1.5px; height:26px; align-items:flex-end;}
+  .rx-barcode span{display:block; background:var(--ink); width:2px;}
+  .rx-foot .rx-note{font-family:var(--mono); font-size:9.5px; color:var(--ink-soft); letter-spacing:0.05em; text-align:right;}
+  .float-badge{position:absolute; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:10px 14px; box-shadow:0 14px 26px -14px var(--shadow); font-family:var(--body); font-size:12.5px; font-weight:600; color:var(--primary); display:flex; align-items:center; gap:8px;}
+  .float-badge.b1{top:-16px; right:0; color:var(--accent-deep);}
+  .float-badge.b1::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--accent);}
+  .float-badge.b2{bottom:-18px; left:-10px;}
+  .float-badge.b2::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--primary);}
+
+  @media(max-width:940px){
+    .hero{grid-template-columns:1fr; padding-top:56px;}
+    .label-stage{margin-top:30px;}
+  }
+
+  /* ---------- SECTION SHELL ---------- */
+  section{padding:100px 0;}
+  .section-head{max-width:620px; margin-bottom:56px;}
+  h2{font-family:var(--display); font-weight:600; font-size:clamp(28px,3.2vw,40px); color:var(--primary-deep); letter-spacing:-0.015em; line-height:1.12;}
+  .section-head p{margin-top:16px; color:var(--ink-soft); font-size:16.5px; max-width:520px;}
+
+  /* ---------- PROBLEM ---------- */
+  .problem{background:var(--surface); border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
+  .problem-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line);}
+  .problem-card{background:var(--surface); padding:38px 32px;}
+  .problem-card .num{font-family:var(--mono); font-size:12px; color:var(--accent-deep); font-weight:700; letter-spacing:0.08em;}
+  .problem-card h3{font-family:var(--display); font-size:20px; font-weight:600; margin:14px 0 10px; color:var(--primary-deep);}
+  .problem-card p{color:var(--ink-soft); font-size:14.5px;}
+  @media(max-width:820px){.problem-grid{grid-template-columns:1fr;}}
+
+  /* ---------- COUNTERS / FEATURES ---------- */
+  .counters{display:grid; grid-template-columns:repeat(3,1fr); gap:22px;}
+  .counter{background:var(--surface); border:1px solid var(--line); border-radius:16px; overflow:hidden; transition:transform 0.18s ease, box-shadow 0.18s ease;}
+  .counter:hover{transform:translateY(-4px); box-shadow:0 20px 36px -18px var(--shadow);}
+  .counter-sign{background:var(--primary-tint); color:var(--primary); font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:0.1em; padding:11px 20px; display:flex; justify-content:space-between;}
+  .counter-sign span:last-child{color:var(--accent-deep);}
+  .counter-body{padding:26px 22px 28px;}
+  .counter-body h3{font-family:var(--display); font-size:19px; font-weight:600; color:var(--primary-deep); margin-bottom:10px;}
+  .counter-body p{font-size:14.5px; color:var(--ink-soft); margin-bottom:14px;}
+  .counter-list{list-style:none; font-size:13px; color:var(--ink-soft);}
+  .counter-list li{padding:4px 0; display:flex; gap:8px;}
+  .counter-list li::before{content:"—"; color:var(--accent);}
+  @media(max-width:940px){.counters{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:620px){.counters{grid-template-columns:1fr;}}
+
+  /* ---------- HOW IT WORKS ---------- */
+  .how{background:var(--primary-deep); color:var(--surface);}
+  .how .section-head p{color:#A9C2B8;}
+  .how .eyebrow{color:#FFB49B;}
+  .how h2{color:var(--surface);}
+  .steps{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:rgba(255,255,255,0.12); border-top:1px solid rgba(255,255,255,0.12); border-bottom:1px solid rgba(255,255,255,0.12);}
+  .step{background:var(--primary-deep); padding:36px 30px 42px;}
+  .step .stepnum{font-family:var(--mono); font-size:13px; font-weight:700; color:var(--accent); letter-spacing:0.1em; margin-bottom:16px; display:block;}
+  .step h3{font-family:var(--display); font-size:20px; font-weight:600; margin-bottom:10px;}
+  .step p{font-size:14.5px; color:#A9C2B8;}
+  @media(max-width:820px){.steps{grid-template-columns:1fr;}}
+
+  /* ---------- PRICING ---------- */
+  .plans{display:grid; grid-template-columns:repeat(3,1fr); gap:22px;}
+  .plan{background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:34px 28px; display:flex; flex-direction:column; position:relative;}
+  .plan.featured{background:var(--primary); color:var(--surface); border-color:var(--primary);}
+  .plan.featured .plan-note, .plan.featured .plan-list li{color:#CBDED5;}
+  .plan-badge{position:absolute; top:-13px; right:24px; background:var(--accent); color:var(--surface); font-family:var(--mono); font-size:10.5px; font-weight:700; letter-spacing:0.06em; padding:5px 12px; border-radius:20px;}
+  .plan-name{font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent-deep);}
+  .plan.featured .plan-name{color:#FFB49B;}
+  .plan-price{font-family:var(--display); font-size:32px; font-weight:600; margin:14px 0 6px;}
+  .plan-note{font-size:12.5px; color:var(--ink-soft); margin-bottom:22px;}
+  .plan-list{list-style:none; font-size:14px; flex:1;}
+  .plan-list li{padding:9px 0; border-top:1px dashed var(--line); display:flex; gap:10px;}
+  .plan.featured .plan-list li{border-top-color:rgba(255,255,255,0.22);}
+  .plan-list li::before{content:"✓"; color:var(--accent); font-weight:700;}
+  .plan.featured .plan-list li::before{color:#FFB49B;}
+  .plan .btn{margin-top:24px; justify-content:center; width:100%;}
+
+  /* ---------- USE CASES ---------- */
+  .chips{display:flex; flex-wrap:wrap; gap:12px;}
+  .chip{font-family:var(--body); font-size:13.5px; font-weight:500; letter-spacing:0.01em; padding:12px 20px; border:1px solid var(--line); border-radius:999px; background:var(--surface); display:flex; align-items:center; gap:9px;}
+  .chip::before{content:""; width:6px; height:6px; background:var(--accent); border-radius:50%;}
+
+  /* ---------- CTA ---------- */
+  .cta-band{background:var(--accent); color:var(--surface); text-align:center; padding:96px 0;}
+  .cta-band .eyebrow{color:rgba(255,255,255,0.85); justify-content:center;}
+  .cta-band .eyebrow::before{background:var(--primary-deep);}
+  .cta-band h2{color:var(--surface); max-width:640px; margin:0 auto;}
+  .cta-band p{color:rgba(255,255,255,0.9); max-width:480px; margin:18px auto 34px; font-size:16.5px;}
+
+  /* ---------- DISCLAIMER ---------- */
+  .disclaimer{background:var(--surface-2); border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:28px 0;}
+  .disclaimer p{font-size:13px; color:var(--ink-soft); max-width:820px; line-height:1.6;}
+  .disclaimer strong{color:var(--ink);}
+
+  /* ---------- FOOTER ---------- */
+  footer{background:var(--primary-deep); color:#A9C2B8; padding:56px 0 32px; font-size:13.5px;}
+  .foot-top{display:flex; justify-content:space-between; align-items:flex-start; gap:40px; flex-wrap:wrap; padding-bottom:36px; border-bottom:1px solid rgba(255,255,255,0.12);}
+  .foot-brand p{margin-top:14px; max-width:280px; color:#8AA79B;}
+  .foot-cols{display:flex; gap:56px; flex-wrap:wrap;}
+  .foot-col h4{font-family:var(--mono); font-size:11.5px; letter-spacing:0.1em; text-transform:uppercase; color:#FFB49B; margin-bottom:14px;}
+  .foot-col a{display:block; padding:5px 0; color:#CBDED5; transition:color 0.15s ease;}
+  .foot-col a:hover{color:var(--surface);}
+  .foot-bottom{display:flex; justify-content:space-between; padding-top:24px; font-family:var(--mono); font-size:11.5px; color:#6D8A7D; flex-wrap:wrap; gap:10px;}
+
+  .reveal{opacity:0; transform:translateY(16px); transition:opacity 0.6s ease, transform 0.6s ease;}
+  .reveal.in{opacity:1; transform:translateY(0);}
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <div class="brand">
+      <svg width="40" height="40" viewBox="0 0 128 128" role="img" aria-label="NutriCart icon">
+        <rect x="4" y="4" width="120" height="120" rx="28" fill="#114C3E"/>
+        <circle cx="94" cy="30" r="9" fill="none" stroke="#FF7A59" stroke-width="2" opacity="0.35"/>
+        <circle cx="94" cy="30" r="5" fill="#FF7A59"/>
+        <path d="M40 92 Q64 104 88 92" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
+        <circle cx="47" cy="100" r="6.5" fill="#FFFFFF"/>
+        <circle cx="81" cy="100" r="6.5" fill="#FFFFFF"/>
+        <rect x="54" y="28" width="20" height="56" rx="6" fill="#FFFFFF"/>
+        <rect x="32" y="50" width="64" height="20" rx="6" fill="#FFFFFF"/>
+      </svg>
+      <span class="brand-word">Nutri<em>Cart</em></span>
+    </div>
+    <div class="nav-links">
+      <a href="#counters">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#use-cases">Who it's for</a>
+    </div>
+    <a href="#get-started" class="btn btn-primary">Add to Chrome</a>
+  </nav>
+</header>
+
+<section class="hero wrap">
+  <div>
+    <div class="eyebrow">AI pharmacy shopping assistant</div>
+    <h1>Your pharmacy,<br>powered by <span>AI</span>.</h1>
+    <p class="lede">NutriCart compares prices across pharmacies, flags interactions, and keeps every prescription and refill organized — all from one browser extension.</p>
+    <div class="hero-cta">
+      <!-- Replace href with your live Chrome Web Store listing URL -->
+      <a href="#get-started" class="btn btn-primary">Add to Chrome — It's Free</a>
+      <a href="#how" class="btn btn-ghost">See how it works</a>
+    </div>
+    <div class="trust">FREE TO START · NO CREDIT CARD · WORKS WITH MAJOR RETAIL PHARMACIES</div>
+  </div>
+
+  <div class="label-stage">
+    <div class="float-badge b1">AI matched</div>
+    <div class="rx-card">
+      <div class="rx-scan"></div>
+      <div class="rx-head">
+        <div class="rx-mark">
+          <svg width="20" height="20" viewBox="0 0 128 128" aria-hidden="true">
+            <rect x="4" y="4" width="120" height="120" rx="28" fill="#FFFFFF" opacity="0.16"/>
+            <rect x="54" y="28" width="20" height="56" rx="6" fill="#FFFFFF"/>
+            <rect x="32" y="50" width="64" height="20" rx="6" fill="#FFFFFF"/>
+          </svg>
+          NutriCart
+        </div>
+        <div class="rx-badge">LIVE SCAN</div>
+      </div>
+      <div class="rx-body">
+        <div class="rx-row"><span class="name">Prescription profile</span><span class="val">SET</span></div>
+        <div class="rx-row"><span class="name">Interaction check</span><span class="val">CLEAR</span></div>
+        <div class="rx-row"><span class="name">Price comparison</span><span class="val">6 STORES</span></div>
+        <div class="rx-row"><span class="name">Best price found</span><span class="val">MATCHED</span></div>
+        <div class="rx-row"><span class="name">Next refill</span><span class="val">REMINDER SET</span></div>
+        <div class="rx-foot">
+          <div class="rx-barcode" id="barcode"></div>
+          <div class="rx-note">VERIFIED<br>PHARMACY NETWORK</div>
+        </div>
+      </div>
+    </div>
+    <div class="float-badge b2">Savings tracked</div>
+  </div>
+</section>
+
+<div class="trustbar">
+  <div class="wrap trustbar-inner">
+    <span>Privacy-first by design</span>
+    <span>Independent price comparison</span>
+    <span>Built for major pharmacy retailers</span>
+    <span>No medical advice — shopping data only</span>
+  </div>
+</div>
+
+<section class="problem">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">The problem</div>
+      <h2>Filling a prescription shouldn't feel like guesswork.</h2>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card reveal">
+        <div class="num">01</div>
+        <h3>Prices vary wildly</h3>
+        <p>The same medication can cost very differently from one pharmacy to the next, and there's rarely an easy way to compare before you buy.</p>
+      </div>
+      <div class="problem-card reveal">
+        <div class="num">02</div>
+        <h3>Interactions are easy to miss</h3>
+        <p>Juggling multiple prescriptions and supplements makes it hard to keep track of what shouldn't be combined.</p>
+      </div>
+      <div class="problem-card reveal">
+        <div class="num">03</div>
+        <h3>Refills fall through the cracks</h3>
+        <p>Without a system, it's easy to run out at the worst possible time — or forget you already have some at home.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="counters" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">What's inside</div>
+    <h2>Every counter, covered.</h2>
+    <p>NutriCart is organized like a well-run pharmacy — each counter handles one part of the job, so nothing gets missed.</p>
+  </div>
+  <div class="counters">
+    <div class="counter reveal">
+      <div class="counter-sign"><span>COUNTER 01</span><span>PROFILE</span></div>
+      <div class="counter-body">
+        <h3>Health Profile</h3>
+        <p>Built around what you're actually taking.</p>
+        <ul class="counter-list">
+          <li>Current prescriptions &amp; supplements</li>
+          <li>Allergies &amp; sensitivities</li>
+          <li>Preferred pharmacies</li>
+        </ul>
+      </div>
+    </div>
+    <div class="counter reveal">
+      <div class="counter-sign"><span>COUNTER 02</span><span>AI MATCH</span></div>
+      <div class="counter-body">
+        <h3>AI Recommendations</h3>
+        <p>Suggestions that fit your profile, not a generic list.</p>
+        <ul class="counter-list">
+          <li>Generic &amp; brand alternatives</li>
+          <li>Relevant OTC options</li>
+          <li>Personalized to your history</li>
+        </ul>
+      </div>
+    </div>
+    <div class="counter reveal">
+      <div class="counter-sign"><span>COUNTER 03</span><span>COMPARE</span></div>
+      <div class="counter-body">
+        <h3>Price Comparison</h3>
+        <p>See what the same order costs, store to store.</p>
+        <ul class="counter-list">
+          <li>Live pricing across retailers</li>
+          <li>Coupon &amp; discount matching</li>
+          <li>Delivery vs. pickup options</li>
+        </ul>
+      </div>
+    </div>
+    <div class="counter reveal">
+      <div class="counter-sign"><span>COUNTER 04</span><span>SAFETY</span></div>
+      <div class="counter-body">
+        <h3>Interaction Checker</h3>
+        <p>A second set of eyes on what you're combining.</p>
+        <ul class="counter-list">
+          <li>Cross-checks your full list</li>
+          <li>Flags possible conflicts</li>
+          <li>Plain-language warnings</li>
+        </ul>
+      </div>
+    </div>
+    <div class="counter reveal">
+      <div class="counter-sign"><span>COUNTER 05</span><span>BUDGET</span></div>
+      <div class="counter-body">
+        <h3>Savings Tracker</h3>
+        <p>See exactly what smarter shopping is saving you.</p>
+        <ul class="counter-list">
+          <li>Spend history over time</li>
+          <li>Savings vs. list price</li>
+          <li>Household cost view</li>
+        </ul>
+      </div>
+    </div>
+    <div class="counter reveal">
+      <div class="counter-sign"><span>COUNTER 06</span><span>REFILLS</span></div>
+      <div class="counter-body">
+        <h3>Refill Reminders</h3>
+        <p>Never run out at the wrong moment again.</p>
+        <ul class="counter-list">
+          <li>Automatic refill timing</li>
+          <li>Low-supply alerts</li>
+          <li>One-click reorder</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how" class="how">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">How it works</div>
+      <h2>From medicine cabinet to best price in three steps.</h2>
+      <p>Set it up once, and let NutriCart do the comparing every time you shop.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <span class="stepnum">STEP 01</span>
+        <h3>Build your profile</h3>
+        <p>Add your prescriptions, supplements and preferred pharmacies — it takes about two minutes.</p>
+      </div>
+      <div class="step reveal">
+        <span class="stepnum">STEP 02</span>
+        <h3>Get matched &amp; priced</h3>
+        <p>NutriCart finds relevant options and compares real prices across your local and online pharmacies.</p>
+      </div>
+      <div class="step reveal">
+        <span class="stepnum">STEP 03</span>
+        <h3>Order or pick up smarter</h3>
+        <p>Choose the best price, track your savings, and get reminded before you're ever down to your last dose.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">Pricing</div>
+    <h2>Start free. Upgrade when it earns its keep.</h2>
+    <p>Exact pricing is shown inside the extension at checkout. Here's what's included at each level.</p>
+  </div>
+  <div class="plans">
+    <div class="plan reveal">
+      <div class="plan-name">Free</div>
+      <div class="plan-price">Free</div>
+      <div class="plan-note">For getting started</div>
+      <ul class="plan-list">
+        <li>Basic price comparison</li>
+        <li>Single health profile</li>
+        <li>Limited AI recommendations</li>
+        <li>Manual refill tracking</li>
+      </ul>
+      <a href="#get-started" class="btn btn-ghost">Add to Chrome</a>
+    </div>
+    <div class="plan featured reveal">
+      <div class="plan-badge">Most popular</div>
+      <div class="plan-name">Premium</div>
+      <div class="plan-price">Individual</div>
+      <div class="plan-note">For ongoing prescriptions</div>
+      <ul class="plan-list">
+        <li>Unlimited price comparisons</li>
+        <li>Full interaction checking</li>
+        <li>Automatic refill reminders</li>
+        <li>Savings dashboard</li>
+      </ul>
+      <a href="#get-started" class="btn btn-on-dark">Go Premium</a>
+    </div>
+    <div class="plan reveal">
+      <div class="plan-name">Family</div>
+      <div class="plan-price">Household</div>
+      <div class="plan-note">For the whole household</div>
+      <ul class="plan-list">
+        <li>Multiple health profiles</li>
+        <li>Shared refill calendar</li>
+        <li>Household savings view</li>
+        <li>Caregiver access controls</li>
+      </ul>
+      <a href="#get-started" class="btn btn-ghost">Add to Chrome</a>
+    </div>
+  </div>
+</section>
+
+<section id="use-cases" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">Who it's for</div>
+    <h2>Built for every kind of pharmacy trip.</h2>
+  </div>
+  <div class="chips reveal">
+    <div class="chip">Chronic Condition Management</div>
+    <div class="chip">Caregivers</div>
+    <div class="chip">Seniors</div>
+    <div class="chip">Budget-Conscious Shoppers</div>
+    <div class="chip">Frequent Travelers</div>
+    <div class="chip">Multi-Medication Households</div>
+  </div>
+</section>
+
+<section id="get-started" class="cta-band">
+  <div class="wrap">
+    <div class="eyebrow">Get started</div>
+    <h2>Your next pharmacy run just got easier.</h2>
+    <p>Add NutriCart to Chrome and shop your prescriptions with a clear price, a safety check and a plan already sorted.</p>
+    <!-- Replace href with your live Chrome Web Store listing URL -->
+    <a href="#" class="btn btn-on-dark">Add to Chrome — It's Free</a>
+  </div>
+</section>
+
+<div class="disclaimer">
+  <div class="wrap">
+    <p><strong>Not medical advice.</strong> NutriCart provides shopping, pricing and organizational information only. It does not diagnose, treat, or replace guidance from a licensed pharmacist or physician. Always consult a healthcare professional about your medications.</p>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <div class="brand">
+          <svg width="36" height="36" viewBox="0 0 128 128" role="img" aria-label="NutriCart icon">
+            <rect x="4" y="4" width="120" height="120" rx="28" fill="#FFFFFF" opacity="0.1"/>
+            <circle cx="94" cy="30" r="9" fill="none" stroke="#FF7A59" stroke-width="2" opacity="0.4"/>
+            <circle cx="94" cy="30" r="5" fill="#FF7A59"/>
+            <path d="M40 92 Q64 104 88 92" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
+            <circle cx="47" cy="100" r="6.5" fill="#FFFFFF"/>
+            <circle cx="81" cy="100" r="6.5" fill="#FFFFFF"/>
+            <rect x="54" y="28" width="20" height="56" rx="6" fill="#FFFFFF"/>
+            <rect x="32" y="50" width="64" height="20" rx="6" fill="#FFFFFF"/>
+          </svg>
+          <span class="brand-word">Nutri<em>Cart</em></span>
+        </div>
+        <p>AI-powered pharmacy shopping, from Amiisukyok Creatives.</p>
+      </div>
+      <div class="foot-cols">
+        <div class="foot-col">
+          <h4>Product</h4>
+          <a href="#counters">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#pricing">Pricing</a>
+        </div>
+        <div class="foot-col">
+          <h4>Company</h4>
+          <a href="https://github.com/dianakyokusiima-star/nutricart-" target="_blank" rel="noopener">GitHub</a>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Contact</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 NUTRICART · AMIISUKYOK CREATIVES</span>
+      <span>NOT MEDICAL ADVICE</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var bc = document.getElementById('barcode');
+    var widths = [2,1,3,1,2,1,1,3,2,1,2,3,1,1,2,1,3,2];
+    widths.forEach(function(w, i){
+      var bar = document.createElement('span');
+      var h = 12 + ((i * 29) % 14);
+      bar.style.width = w + 'px';
+      bar.style.height = h + 'px';
+      bc.appendChild(bar);
+    });
+  })();
+
+  (function(){
+    var els = document.querySelectorAll('.reveal');
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, {threshold:0.12});
+    els.forEach(function(el){ io.observe(el); });
+  })();
+</script>
+
+</body>
+</html>
